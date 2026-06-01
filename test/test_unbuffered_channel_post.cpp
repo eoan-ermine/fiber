@@ -5,6 +5,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <chrono>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -440,6 +441,25 @@ void test_issue_268() {
     BOOST_CHECK_EQUAL( 12, vec[1]);
 }
 
+void test_issue_291() {
+    boost::fibers::unbuffered_channel<std::shared_ptr<int>> chan(16);
+    boost::fibers::fiber f([&]() {
+        std::vector<std::shared_ptr<int>> vec;
+        for (auto& foo: chan) {
+            vec.push_back(foo);
+        }
+        auto it = vec.begin();
+        BOOST_CHECK_EQUAL(256, *(*it));
+        it++;
+        BOOST_CHECK_EQUAL(512, *(*it));
+        vec.clear();
+    });
+    chan.push(std::make_shared<int>(256));
+    chan.push(std::make_shared<int>(512));
+    chan.close();
+    f.join();
+}
+
 boost::unit_test::test_suite * init_unit_test_suite( int, char* []) {
     boost::unit_test::test_suite * test =
         BOOST_TEST_SUITE("Boost.Fiber: unbuffered_channel test suite");
@@ -471,6 +491,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* []) {
      test->add( BOOST_TEST_CASE( & test_rangefor) );
      test->add( BOOST_TEST_CASE( & test_issue_181) );
      test->add( BOOST_TEST_CASE( & test_issue_268) );
+     test->add( BOOST_TEST_CASE( & test_issue_291) );
 
     return test;
 }
