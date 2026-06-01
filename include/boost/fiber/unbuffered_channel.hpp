@@ -444,7 +444,6 @@ public:
         }
 
         iterator & operator++() {
-            reinterpret_cast< value_type * >( std::addressof( storage_) )->~value_type();
             increment_();
             return * this;
         }
